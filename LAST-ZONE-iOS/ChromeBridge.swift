@@ -177,27 +177,30 @@ class ChromeBridge: NSObject, WKScriptMessageHandler {
                     }
                 }
             }
-        } else if let keysJson = keysJson, let data = Data(keysJson.utf8), let keysArray = try? JSONSerialization.jsonObject(with: data, options: []) as? [String] {
-            for key in keysArray {
-                if let strValue = defaults.string(forKey: key) {
-                    if strValue.hasPrefix("{") && strValue.hasSuffix("}") {
-                        if let json = try? JSONSerialization.jsonObject(with: Data(strValue.utf8), options: []) as? [String: Any] {
-                            resultObj[key] = json
+        } else if let keysJson = keysJson {
+            let data = Data(keysJson.utf8)
+            if let keysArray = try? JSONSerialization.jsonObject(with: data, options: []) as? [String] {
+                for key in keysArray {
+                    if let strValue = defaults.string(forKey: key) {
+                        if strValue.hasPrefix("{") && strValue.hasSuffix("}") {
+                            if let json = try? JSONSerialization.jsonObject(with: Data(strValue.utf8), options: []) as? [String: Any] {
+                                resultObj[key] = json
+                            } else {
+                                resultObj[key] = strValue
+                            }
+                        } else if strValue.hasPrefix("[") && strValue.hasSuffix("]") {
+                            if let json = try? JSONSerialization.jsonObject(with: Data(strValue.utf8), options: []) as? [Any] {
+                                resultObj[key] = json
+                            } else {
+                                resultObj[key] = strValue
+                            }
+                        } else if strValue == "true" || strValue == "false" {
+                            resultObj[key] = (strValue == "true")
+                        } else if let doubleVal = Double(strValue) {
+                            resultObj[key] = doubleVal
                         } else {
                             resultObj[key] = strValue
                         }
-                    } else if strValue.hasPrefix("[") && strValue.hasSuffix("]") {
-                        if let json = try? JSONSerialization.jsonObject(with: Data(strValue.utf8), options: []) as? [Any] {
-                            resultObj[key] = json
-                        } else {
-                            resultObj[key] = strValue
-                        }
-                    } else if strValue == "true" || strValue == "false" {
-                        resultObj[key] = (strValue == "true")
-                    } else if let doubleVal = Double(strValue) {
-                        resultObj[key] = doubleVal
-                    } else {
-                        resultObj[key] = strValue
                     }
                 }
             }
@@ -212,7 +215,8 @@ class ChromeBridge: NSObject, WKScriptMessageHandler {
     
     func storageSet(itemsJson: String, callbackId: String) {
         let target = getCallingWebView(callbackId: callbackId)
-        guard let data = Data(itemsJson.utf8), let itemsObj = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
+        let data = Data(itemsJson.utf8)
+        guard let itemsObj = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
             return
         }
         
@@ -253,7 +257,8 @@ class ChromeBridge: NSObject, WKScriptMessageHandler {
     
     func storageRemove(keysJson: String, callbackId: String) {
         let target = getCallingWebView(callbackId: callbackId)
-        guard let data = Data(keysJson.utf8), let keysArray = try? JSONSerialization.jsonObject(with: data, options: []) as? [String] else {
+        let data = Data(keysJson.utf8)
+        guard let keysArray = try? JSONSerialization.jsonObject(with: data, options: []) as? [String] else {
             return
         }
         

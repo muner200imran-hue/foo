@@ -297,7 +297,8 @@ class LoginViewController: UIViewController, URLSessionDelegate {
                 
                 let rawSessions = license["synced_sessions"] as? String ?? "[]"
                 var nextSessions = [[String: Any]]()
-                if let sData = Data(rawSessions.utf8), let sArray = try? JSONSerialization.jsonObject(with: sData, options: []) as? [[String: Any]] {
+                let sData = Data(rawSessions.utf8)
+                if let sArray = try? JSONSerialization.jsonObject(with: sData, options: []) as? [[String: Any]] {
                     for sessionObj in sArray {
                         if (sessionObj["device_id"] as? String) != deviceId {
                             nextSessions.append(sessionObj)

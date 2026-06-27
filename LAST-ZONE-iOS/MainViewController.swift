@@ -30,7 +30,7 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(handleLogout), name: NSNotification.Name("LogoutNotification"), object: nil)
         
         // Start periodic validation
-        licenseTimer = Timer.scheduledTimer(timeInterval: 30.0, target: self, selector: #selector(periodicLicenseCheck), repeats: true)
+        licenseTimer = Timer.scheduledTimer(timeInterval: 30.0, target: self, selector: #selector(periodicLicenseCheck), userInfo: nil, repeats: true)
     }
     
     deinit {
