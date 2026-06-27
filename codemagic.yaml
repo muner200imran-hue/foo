@@ -6,33 +6,39 @@ workflows:
     environment:
       xcode: latest
     scripts:
-      - name: Build iOS App (Unsigned)
+      - name: Build iOS Archive
         script: |
+          set -euo pipefail
           PROJECT_PATH=$(find . -name "*.xcodeproj" -maxdepth 2 | head -n 1)
           if [ -z "$PROJECT_PATH" ]; then
             echo "Error: No .xcodeproj found!"
             exit 1
           fi
-          PROJECT_DIR=$(dirname "$PROJECT_PATH")
           PROJECT_NAME=$(basename "$PROJECT_PATH" .xcodeproj)
           echo "Found project: $PROJECT_PATH"
           echo "Scheme: $PROJECT_NAME"
-          
+
           xcodebuild archive \
             -project "$PROJECT_PATH" \
             -scheme "$PROJECT_NAME" \
             -configuration Release \
-            -archivePath $FCI_BUILD_DIR/$PROJECT_NAME.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
+            -destination "generic/platform=iOS" \
+            -archivePath "$FCI_BUILD_DIR/$PROJECT_NAME.xcarchive" \
+            -allowProvisioningUpdates
       - name: Create Payload and Zip to IPA
         script: |
+          set -euo pipefail
           PROJECT_PATH=$(find . -name "*.xcodeproj" -maxdepth 2 | head -n 1)
           PROJECT_NAME=$(basename "$PROJECT_PATH" .xcodeproj)
-          mkdir -p $FCI_BUILD_DIR/Payload
-          cp -r $FCI_BUILD_DIR/$PROJECT_NAME.xcarchive/Products/Applications/$PROJECT_NAME.app $FCI_BUILD_DIR/Payload/
-          cd $FCI_BUILD_DIR
-          zip -r $PROJECT_NAME.ipa Payload
+          APP_PATH="$FCI_BUILD_DIR/$PROJECT_NAME.xcarchive/Products/Applications/$PROJECT_NAME.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Error: archived app not found at $APP_PATH"
+            exit 1
+          fi
+          mkdir -p "$FCI_BUILD_DIR/Payload"
+          rm -rf "$FCI_BUILD_DIR/Payload/$PROJECT_NAME.app"
+          cp -R "$APP_PATH" "$FCI_BUILD_DIR/Payload/"
+          cd "$FCI_BUILD_DIR"
+          zip -r "$PROJECT_NAME.ipa" Payload
     artifacts:
       - $FCI_BUILD_DIR/*.ipa
