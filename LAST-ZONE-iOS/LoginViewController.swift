@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import CryptoKit
 
 class LoginViewController: UIViewController, URLSessionDelegate {
     
@@ -412,13 +413,9 @@ class PinnedSessionDelegate: NSObject, URLSessionDelegate {
             if let serverPublicKey = SecCertificateCopyKey(cert),
                let serverPublicKeyData = SecKeyCopyExternalRepresentation(serverPublicKey, nil) as Data? {
                 
-                // SHA256 Hash of Public Key
-                var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-                serverPublicKeyData.withUnsafeBytes {
-                    _ = CC_SHA256($0.baseAddress, CC_LONG(serverPublicKeyData.count), &hash)
-                }
-                
-                let keyHashBase64 = Data(hash).base64EncodedString()
+                // SHA256 Hash of Public Key using modern CryptoKit
+                let keyHash = SHA256.hash(data: serverPublicKeyData)
+                let keyHashBase64 = Data(keyHash).base64EncodedString()
                 if SecurityHelper.supabasePins.contains(keyHashBase64) {
                     completionHandler(.useCredential, URLCredential(trust: serverTrust))
                     return
