@@ -1,0 +1,26 @@
+workflows:
+  ios-workflow:
+    name: iOS Build Workflow
+    instance_type: mac_mini_m1
+    max_build_duration: 120
+    environment:
+      xcode: latest
+    scripts:
+      - name: Build iOS App (Unsigned)
+        script: |
+          xcodebuild archive \
+            -project "LAST-ZONE-iOS.xcodeproj" \
+            -scheme "LAST-ZONE-iOS" \
+            -configuration Release \
+            -archivePath $FCI_BUILD_DIR/LAST-ZONE-iOS.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+      - name: Create Payload and Zip to IPA
+        script: |
+          mkdir -p $FCI_BUILD_DIR/Payload
+          cp -r $FCI_BUILD_DIR/LAST-ZONE-iOS.xcarchive/Products/Applications/LAST-ZONE-iOS.app $FCI_BUILD_DIR/Payload/
+          cd $FCI_BUILD_DIR
+          zip -r LAST-ZONE-iOS.ipa Payload
+    artifacts:
+      - $FCI_BUILD_DIR/*.ipa
